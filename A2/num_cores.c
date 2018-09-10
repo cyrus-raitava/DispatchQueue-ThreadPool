@@ -8,9 +8,6 @@
 
 int main(int argc, char *argv[])
 {
-//    printf("This system has %d processors configured and "
-//           "%d processors available.\n",
-//           get_nprocs_conf(), get_nprocs());
         printf("This machine has %ld cores.\n", sysconf(_SC_NPROCESSORS_ONLN));
     return 0;
 }
