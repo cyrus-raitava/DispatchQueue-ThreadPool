@@ -22,11 +22,38 @@ task_t *task_create(void (*work)(void *), void *params, char *name)
     return newTask;
 }
 
-void task_destroy(task_t *);
+// Method to destroy the task structure
+void task_destroy(task_t *task)
+{
+    free(task); 
+}
 
-dispatch_queue_t *dispatch_queue_create(queue_type_t);
+dispatch_queue_t *dispatch_queue_create(queue_type_t)
+{
+    // Create new pointer to new dispatch queue
+    dispatch_queue_t *newDispatchQueue = malloc(sizeof(dispatch_queue_t));
 
-void dispatch_queue_destroy(dispatch_queue_t *);
+    // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
+    newDispatchQueue->head = (task_t*)(malloc(sizeof(task_t)));
+
+    // Get the number of cores of the computer
+    int numberOfThreads = num_cores();
+
+    // Allocate space for the thread queue contained within the dispatch queue
+    newDispatchQueue->threadQueue = (dispatch_queue_thread_t*)(malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads));
+
+    // Return the newly made dispatch queue
+    return newDispatchQueue;
+}
+
+void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
+{
+    // NOTE THAT TASKS SHOULD PRESUMABLY BE FREE AT THIS POINT. MAKE A CHECK THAT THEY ARE
+    
+    // Free the thread queue field
+    free(dispatchQueue->threadQueue);
+
+}
 
 int dispatch_async(dispatch_queue_t *, task_t *);
 

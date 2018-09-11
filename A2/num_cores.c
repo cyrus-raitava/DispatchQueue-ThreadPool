@@ -12,3 +12,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+// Method to get the number of processors on the machine
+int getNumberOfProcessors()
+{
+    return sysconf(_SC_NPROCESSORS_ONLN);
+}
+
