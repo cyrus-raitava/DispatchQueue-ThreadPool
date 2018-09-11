@@ -28,10 +28,16 @@ void task_destroy(task_t *task)
     free(task); 
 }
 
-dispatch_queue_t *dispatch_queue_create(queue_type_t)
+dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
 {
     // Create new pointer to new dispatch queue
-    dispatch_queue_t *newDispatchQueue = malloc(sizeof(dispatch_queue_t));
+    dispatch_queue_t *newDispatchQueue;
+    
+    // Allocate memory for dispatch queue
+    newDispatchQueue = malloc(sizeof(dispatch_queue_t));
+
+    // Set the queue type field
+    newDispatchQueue->queue_type = queueType;
 
     // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
     newDispatchQueue->head = (task_t*)(malloc(sizeof(task_t)));
