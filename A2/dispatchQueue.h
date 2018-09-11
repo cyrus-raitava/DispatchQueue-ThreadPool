@@ -21,11 +21,13 @@
         CONCURRENT, SERIAL
     } queue_type_t;
 
+    // Task structure
     typedef struct task {
         char name[64];              // to identify it when debugging
         void (*work)(void *);       // the function to perform
         void *params;               // parameters to pass to the function
         task_dispatch_type_t type;  // asynchronous or synchronous
+        struct task *nextTask;          // pointer to next task (NEEDS TO BE STRUCT TASK (NOT ALIAS))
     } task_t;
     
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
@@ -38,10 +40,25 @@
         task_t *task;           // the current task for this thread
     };
 
+    // Create queue structure
+    struct queue_t {
+        
+    };
+
     struct dispatch_queue_t {
         queue_type_t queue_type;            // the type of queue - serial or concurrent
-        // LINKED LIST FOR TASKS (FOR DYNAMIC ALLOCATION)
-        // LIST FOR THREADS
+
+        // TODO: LINKED LIST FOR TASKS (FOR DYNAMIC ALLOCATION)
+
+        // Pointer to first task in linked list tasks array
+        task_t *head;
+
+        // TODO: LIST FOR THREADS
+
+        // Pointer to first element of list of threads
+        dispatch_queue_thread_t *threadQueue;
+
+        
 
         // LINKED LIST FOR THREADS ALSO
     };
