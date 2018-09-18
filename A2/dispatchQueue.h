@@ -28,6 +28,7 @@
         void *params;               // parameters to pass to the function
         task_dispatch_type_t type;  // asynchronous or synchronous
         struct task *nextTask;          // pointer to next task (NEEDS TO BE STRUCT TASK (NOT ALIAS))
+        struct task *prevTask;
     } task_t;
     
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
