@@ -13,6 +13,8 @@
     
 #define error_exit(MESSAGE)     perror(MESSAGE), exit(EXIT_FAILURE)
 
+    typedef struct node node_t; // pre-define typedef struct to be defined
+
     typedef enum { // whether dispatching a task synchronously or asynchronously
         ASYNC, SYNC
     } task_dispatch_type_t;
@@ -27,9 +29,14 @@
         void (*work)(void *);       // the function to perform
         void *params;               // parameters to pass to the function
         task_dispatch_type_t type;  // asynchronous or synchronous
-        struct task *nextTask;          // pointer to next task (NEEDS TO BE STRUCT TASK (NOT ALIAS))
-        struct task *prevTask;
     } task_t;
+
+    // Struct to be used for doubly-linked list of tasks
+    typedef struct node {
+        task_t *nodeTask;
+        node_t *prevNode;
+        node_t *nextNode;
+    } node_t;
     
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
     typedef struct dispatch_queue_thread_t dispatch_queue_thread_t; // the dispatch queue thread type
@@ -51,17 +58,13 @@
 
         // TODO: LINKED LIST FOR TASKS (FOR DYNAMIC ALLOCATION)
 
-        // Pointer to first task in linked list tasks array
-        task_t *head;
+        // Pointer to first node in linked list tasks array
+        node_t *head;
 
         // TODO: LIST FOR THREADS
 
-        // Pointer to first element of list of threads
+        // Pointer to first element of list of threads (linked list?)
         dispatch_queue_thread_t *threadQueue;
-
-        
-
-        // LINKED LIST FOR THREADS ALSO
     };
     
     task_t *task_create(void (*)(void *), void *, char*);
