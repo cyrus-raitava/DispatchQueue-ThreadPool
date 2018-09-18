@@ -48,21 +48,14 @@
         task_t *task;           // the current task for this thread
     };
 
-    // Create queue structure
-    struct queue_t {
-        
-    };
-
     struct dispatch_queue_t {
         queue_type_t queue_type;            // the type of queue - serial or concurrent
 
         // TODO: LINKED LIST FOR TASKS (FOR DYNAMIC ALLOCATION)
-
         // Pointer to first node in linked list tasks array
         node_t *head;
 
         // TODO: LIST FOR THREADS
-
         // Pointer to first element of list of threads (linked list?)
         dispatch_queue_thread_t *threadQueue;
     };

@@ -56,7 +56,7 @@ void append(node_t *head, task_t *newTask)
 // (NOTE) it's important to remember to change the head pointer, when using this
 void prepend(node_t *head, task_t *newTask)
 {
-    node_t* newNode = node_create(newTask, NULL, head);
+    head->prevNode = node_create(newTask, NULL, head);
 }
 
 dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
@@ -70,11 +70,18 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
     // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
     newDispatchQueue->head = (node_t*)(malloc(sizeof(node_t)));
 
-    // Get the number of cores of the computer
-    int numberOfThreads = num_cores();
+    if (queueType = CONCURRENT) 
+    {
+        // Get the number of cores of the computer
+        int numberOfThreads = num_cores();
 
-    // Allocate space for the thread queue contained within the dispatch queue
-    newDispatchQueue->threadQueue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads);
+        // Allocate space for the thread queue contained within the dispatch queue
+        newDispatchQueue->threadQueue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads);
+    } else if (queueType = SERIAL)
+    {
+        newDispatchQueue->threadQueue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t));
+    }
+
 
     // Return the newly made dispatch queue
     return newDispatchQueue;
@@ -92,6 +99,8 @@ void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
     // Free the thread queue field
     free(dispatchQueue->threadQueue);
 
+    // Free the queue type field
+    free(dispatchQueue->queue_type);
 }
 
 // Free tasks in linked list, given the location of the head of the queue
@@ -112,14 +121,19 @@ void free_nodes_from_list(node_t *head)
     node_destroy(toFree);
 }
 
+void wrapper_function(task_t *task)
+{
+    sem_t firstSem;
+    sem_init(&firstSem, 0, 10);
+}
+
 int dispatch_async(dispatch_queue_t *queue, task_t *task)
 {
-    // Grab task off of head of queue?
+
+    // Prepend task to start of queue
+    prepend(queue->head, task);
 
     // Make second element head of dispatch_queue
-
-    // TODO: CHANGE HERE
-    return 0;
 
 }
 
