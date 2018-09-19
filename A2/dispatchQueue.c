@@ -37,14 +37,16 @@ void task_destroy(task_t *task)
     DEBUG_PRINTLN("DESTROYED TASK\n");
 }
 
-// Method to create node in doubly-linked list
+// Method to create node in singly-linked list
 node_t *node_create(task_t *task, node_t *nextNode)
 {
     node_t *newNode = malloc(sizeof (node_t));
     newNode->nodeTask = task;
     newNode->nextNode = nextNode;
 
+    DEBUG_PRINTLN("===============\n");
     DEBUG_PRINTLN("CREATED NODE\n");
+    DEBUG_PRINTLN("NODE HAS TASK NAME: %s\n", newNode->nodeTask->name);
 
     return newNode;
 }
@@ -64,36 +66,58 @@ void node_destroy(node_t *node)
     DEBUG_PRINTLN("DESTROYED NODE\n");
 }
 
-// Method to append task/node struct onto end of doubly-linked list
-node_t* push(dispatch_queue_t *dispatchQueue, task_t *newTask)
+// Method to append task/node struct onto end of singly-linked list
+void push(dispatch_queue_t *dispatchQueue, task_t *newTask)
 {
-    node_t *current = dispatchQueue->head;
-    while (current->nextNode != NULL) {
-        current = current->nextNode;
+    // Push node onto queue
+
+    // Check if head exists, and if it doesn't, set
+    // the new task, wrapped in a node, to be the head
+
+    DEBUG_PRINTLN("PUSHING NODE W/ TASK NAME: %s\n", newTask->name);
+
+    if (!dispatchQueue->head) {
+        dispatchQueue->head = node_create(newTask, NULL);
+        DEBUG_PRINTLN("HEAD DIDN'T EXIST, SO HEAD IS NOW TASK W/ NAME: %s\n", dispatchQueue->head->nodeTask->name);
+        return;
     }
 
-    current->nextNode = node_create(newTask, current);
+    // If the head does exist, follow the pointers of nextNode
+    // down the singly-linked list, to find the current tail
+    node_t *position = dispatchQueue->head;
 
-    DEBUG_PRINTLN("PUSHED NODE ONTO A QUEUE\n");
-    DEBUG_PRINTLN("TASK HAS NAME %s\n", current->nextNode->nodeTask->name);
+    while (position->nextNode) {
+        position = position->nextNode;
+    }
 
-    return current->nextNode;  
+    // Append task wrapped in node, onto tail of singly-linked list
+    position->nextNode = node_create(newTask, NULL);
+    return;
 }
 
-// Method to pop task/node struct off of beginning of doubly-linked list
+// Method to pop task/node struct off of beginning of singly-linked list
 // (NOTE) it's important to remember to change the head pointer, when using this
 node_t* pop(dispatch_queue_t *dispatchQueue)
 {
     DEBUG_PRINTLN("GOT IN POP\n");
+    
+    if (!dispatchQueue->head) {
+        DEBUG_PRINTLN("POP: HEAD WAS NULL, BAD BAD NOT GOOD\n");
+        return NULL;
+    }
+
     node_t *result = dispatchQueue->head;
+    
+    // If there is a second node, set that to be the new head
+    if (dispatchQueue->head->nextNode) {
+        dispatchQueue->head = dispatchQueue->head->nextNode;
+        return result;
+    } else {
 
-    dispatchQueue->head = dispatchQueue->head->nextNode;
-
-    DEBUG_PRINTLN("POPPED NODE\n");
-
-    DEBUG_PRINTLN("POPPED NODE HAS NAME: %s\n", result->nodeTask->name);
-
-    return result;
+        // If not, set the new head of the dispatchQueue to be null
+        dispatchQueue->head = NULL;
+        return NULL;
+    }
 }
 
 // Wrapper function to aid in blocking until queue has task to complete
@@ -113,6 +137,7 @@ void *wrapper_function(void* input)
 
         // Pop the task off of the head
         node_t *taskedNode = pop(dispatchQueue);
+        DEBUG_PRINTLN("POPPED NODE HAS NAME: %s\n", taskedNode->nodeTask->name);
 
         // Save the task to do
         task_t *task = taskedNode->nodeTask;
@@ -139,8 +164,10 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
     DEBUG_PRINTLN("assigning queue type\n");
     newDispatchQueue->queue_type = queueType;
     DEBUG_PRINTLN("assigning head value\n");
+    
+    // HAVE CHANGED, AS HEAD NODE IS FIRST CREATED BY PUSH
     // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
-    newDispatchQueue->head = (node_t *)malloc(sizeof(node_t));
+    //newDispatchQueue->head = (node_t *)malloc(sizeof(node_t));
 
     int numberOfThreads = 0;
 
@@ -226,11 +253,9 @@ void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
 
 int dispatch_async(dispatch_queue_t *queue, task_t *task)
 {
-
-    // Prepend task to start of queue
+    // Push node onto end of queue
     node_t *pushedNode = (node_t *)malloc(sizeof(node_t));
-    
-    pushedNode = push(queue, task);
+    push(queue, task);
 
     sem_post(queue->queue_semaphore);
 
