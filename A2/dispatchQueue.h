@@ -29,12 +29,13 @@
         task_dispatch_type_t type;  // asynchronous or synchronous
     } task_t;
 
+    typedef struct node node_t;
+    
     // Struct to be used for doubly-linked list of tasks
-    typedef struct node {
+    struct node {
         task_t *nodeTask;
-        struct node_t *prevNode;
-        struct node_t *nextNode;
-    } node_t;
+        node_t *nextNode;
+    };
     
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
     typedef struct dispatch_queue_thread_t dispatch_queue_thread_t; // the dispatch queue thread type
