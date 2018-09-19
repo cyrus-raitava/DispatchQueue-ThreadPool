@@ -13,8 +13,6 @@
     
 #define error_exit(MESSAGE)     perror(MESSAGE), exit(EXIT_FAILURE)
 
-    typedef struct node node_t; // pre-define typedef struct to be defined
-
     typedef enum { // whether dispatching a task synchronously or asynchronously
         ASYNC, SYNC
     } task_dispatch_type_t;
@@ -32,11 +30,11 @@
     } task_t;
 
     // Struct to be used for doubly-linked list of tasks
-    typedef struct node {
+    struct node_t {
         task_t *nodeTask;
-        node_t *prevNode;
-        node_t *nextNode;
-    } node_t;
+        struct node_t *prevNode;
+        struct node_t *nextNode;
+    };
     
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
     typedef struct dispatch_queue_thread_t dispatch_queue_thread_t; // the dispatch queue thread type
@@ -49,16 +47,22 @@
     };
 
     struct dispatch_queue_t {
-        queue_type_t queue_type;            // the type of queue - serial or concurrent
+        // the type of queue - serial or concurrent
+        queue_type_t queue_type; 
 
-        // TODO: LINKED LIST FOR TASKS (FOR DYNAMIC ALLOCATION)
         // Pointer to first node in linked list tasks array
-        node_t *head;
+        struct node_t *head;
 
-        // TODO: LIST FOR THREADS
-        // Pointer to first element of list of threads (linked list?)
-        dispatch_queue_thread_t *threadQueue;
+        // Pointer to element of list of threads (order is irrelevant)
+        dispatch_queue_thread_t *thread_queue;
+
+        // Semaphore to let threads know when queue has a task on it
+        sem_t queue_semaphore;
     };
+
+    // node_t* push(dispatch_queue_t *, task_t *);
+    // node_t* pop(dispatch_queue_t *);
+    
     
     task_t *task_create(void (*)(void *), void *, char*);
     
