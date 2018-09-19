@@ -67,8 +67,7 @@ void node_destroy(node_t *node)
 // Method to append task/node struct onto end of doubly-linked list
 node_t* push(dispatch_queue_t *dispatchQueue, task_t *newTask)
 {
-    node_t *current = (node_t *)malloc(sizeof(node_t));
-    current = dispatchQueue->head;
+    node_t *current = dispatchQueue->head;
     while (current->nextNode != NULL) {
         current = current->nextNode;
     }
@@ -76,32 +75,34 @@ node_t* push(dispatch_queue_t *dispatchQueue, task_t *newTask)
     current->nextNode = node_create(newTask, current);
 
     DEBUG_PRINTLN("PUSHED NODE ONTO A QUEUE\n");
+    DEBUG_PRINTLN("TASK HAS NAME %s\n", current->nextNode->nodeTask->name);
 
     return current->nextNode;  
 }
 
 // Method to pop task/node struct off of beginning of doubly-linked list
 // (NOTE) it's important to remember to change the head pointer, when using this
-node_t *pop(dispatch_queue_t *dispatchQueue)
+node_t* pop(dispatch_queue_t *dispatchQueue)
 {
-    printf("got here");
+    DEBUG_PRINTLN("GOT IN POP\n");
     node_t *result = dispatchQueue->head;
-    printf("got here");
 
     dispatchQueue->head = dispatchQueue->head->nextNode;
 
     DEBUG_PRINTLN("POPPED NODE\n");
 
+    DEBUG_PRINTLN("POPPED NODE HAS NAME: %s\n", result->nodeTask->name);
+
     return result;
 }
 
 // Wrapper function to aid in blocking until queue has task to complete
-void *wrapper_function(void * input)
+void *wrapper_function(void* input)
 {
 
     dispatch_queue_t *dispatchQueue = (dispatch_queue_t *)input;
 
-    printf(dispatchQueue->head->nodeTask->name);
+    //printf(dispatchQueue->head->nodeTask->name);
 
     while(1) 
     {
@@ -113,7 +114,6 @@ void *wrapper_function(void * input)
         // Pop the task off of the head
         node_t *taskedNode = pop(dispatchQueue);
 
-        printf("here woo");
         // Save the task to do
         task_t *task = taskedNode->nodeTask;
 
@@ -166,12 +166,15 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
     sem_init(semaphore, 0, 0);
     DEBUG_PRINTLN("assigning queue semaphore\n");
 
+    // Assign semaphore of queue
     newDispatchQueue->queue_semaphore = semaphore;
+
+    // Iterate through threads in thread pool, and initialise each
     for (int i = 0; i < numberOfThreads; i++){
         pthread_t *threadPool = malloc(sizeof(pthread_t));
         dispatch_queue_thread_t *queue_pointer = &newDispatchQueue->thread_queue[i];
         DEBUG_PRINTLN("making a thread\n");
-        pthread_create(threadPool, NULL, wrapper_function, &newDispatchQueue);
+        pthread_create(threadPool, NULL, wrapper_function, newDispatchQueue);
     }
 
     // Return the newly made dispatch queue
