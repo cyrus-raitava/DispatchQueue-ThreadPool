@@ -24,14 +24,16 @@ void task_destroy(task_t *task)
 }
 
 // Method to create node in doubly-linked list
-node_t *node_create(task_t *task, node_t *prevNode, node_t *nextNode){
-    node_t *newNode = malloc(sizeof (node_t));
+node_t *node_create(task_t *task, node_t *previousNode, node_t *nexNode)
+{
+    node_t *newNode = (node_t *)malloc(sizeof (node_t));
     newNode->nodeTask = task;
-    newNode->prevNode = prevNode;
-    newNode->nextNode = nextNode;
+    newNode->prevNode = previousNode;
+    newNode->nextNode = nexNode;
 
     return newNode;
 }
+
 
 // Method to destroy a node
 void node_destroy(node_t *node)
@@ -42,7 +44,7 @@ void node_destroy(node_t *node)
 }
 
 // Method to append task/node struct onto end of doubly-linked list
-*node_t push(dispatch_queue_t *dispatchQueue, task_t *newTask)
+node_t* push(dispatch_queue_t *dispatchQueue, task_t *newTask)
 {
     node_t *current = (node_t *)malloc(sizeof(node_t));
     current = dispatchQueue->head;
@@ -57,7 +59,7 @@ void node_destroy(node_t *node)
 
 // Method to pop task/node struct off of beginning of doubly-linked list
 // (NOTE) it's important to remember to change the head pointer, when using this
-*node_t pop(dispatch_queue_t *dispatchQueue)
+node_t *pop(dispatch_queue_t *dispatchQueue)
 {
     node_t *result = (node_t*)malloc(sizeof(node_t));
     result = dispatchQueue->head;
@@ -87,24 +89,26 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
         numberOfThreads = num_cores();
 
         // Allocate space for the thread queue contained within the dispatch queue
-        newDispatchQueue->threadQueue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads);
+        newDispatchQueue->thread_queue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads);
     } else if (queueType = SERIAL)
     {
-        newDispatchQueue->threadQueue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t));
+        newDispatchQueue->thread_queue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t));
         numberOfThreads = 1;
     }
 
     // Allocate memory for the semaphore to be used for the queue
-    sem_t *semaphore = (sem_t *)malloc(sizeof(sem_t));
+    sem_t *semaphore =malloc(sizeof(sem_t));
 
     // Initialise the value of the semaphore
     // (initial value of 0, with the forked flag set to zero)
-    newDispatchQueue->queue_semaphore = sem_init(semaphore, 0, 0);
+    sem_init(semaphore, 0, 0);
+    newDispatchQueue->queue_semaphore = semaphore;
 
-    for (int i = 0; i < numberOfThreads; i++)
-    {
-        pthread_t threadPool;
-        newDispatchQueue->threadQueue[i] = pthread_create(&threadPool, NULL, wrapper_function, &newDispatchQueue);
+    for (int i = 0; i < numberOfThreads; i++){
+        pthread_t *threadPool;
+        dispatch_queue_thread_t *queue_pointer = &newDispatchQueue->thread_queue[i];
+
+        pthread_create(threadPool, NULL, wrapper_function, &newDispatchQueue);
     }
 
     // Return the newly made dispatch queue
@@ -121,7 +125,7 @@ void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
     }
     
     // Free the thread queue field
-    free(dispatchQueue->threadQueue);
+    free(dispatchQueue->thread_queue);
 
     // Free the queue type field
     free(dispatchQueue->queue_type);
@@ -149,10 +153,10 @@ void free_nodes_from_list(node_t *head)
 }
 
 // Wrapper function to aid in blocking until queue has task to complete
-void *wrapper_function((void *) *input)
+void *wrapper_function(void * input)
 {
 
-    dispatch_queue_t *dispatchQueue = (dispatch_queue_t *)input;
+    dispatch_queue_t *dispatchQueue = input;
 
     while(1) 
     {

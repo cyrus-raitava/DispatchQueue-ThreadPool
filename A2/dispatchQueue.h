@@ -30,13 +30,12 @@
     } task_t;
 
     // Struct to be used for doubly-linked list of tasks
-    struct node_t {
+    typedef struct node {
         task_t *nodeTask;
         struct node_t *prevNode;
         struct node_t *nextNode;
-    };
+    } node_t;
     
-    typedef struct node_t node_t;
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
     typedef struct dispatch_queue_thread_t dispatch_queue_thread_t; // the dispatch queue thread type
 
@@ -52,19 +51,15 @@
         queue_type_t queue_type; 
 
         // Pointer to first node in linked list tasks array
-        struct node_t *head;
+        node_t *head;
 
         // Pointer to element of list of threads (order is irrelevant)
         dispatch_queue_thread_t *thread_queue;
 
         // Semaphore to let threads know when queue has a task on it
-        sem_t queue_semaphore;
+        sem_t *queue_semaphore;
     };
-
-    // node_t* push(dispatch_queue_t *, task_t *);
-    // node_t* pop(dispatch_queue_t *);
-    
-    
+   
     task_t *task_create(void (*)(void *), void *, char*);
     
     void task_destroy(task_t *);
