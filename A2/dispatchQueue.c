@@ -1,6 +1,7 @@
 #include "dispatchQueue.h"
 #include "num_cores.c"
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
 
 // Method to create a new task, from a series of parameters
 task_t *task_create(void (*work)(void *), void *params, char *name) 
@@ -23,9 +24,8 @@ void task_destroy(task_t *task)
 }
 
 // Method to create node in doubly-linked list
-node_t *node_create(task_t *task, node_t *prevNode, node_t *nextNode)
-{
-    node_t *newNode = (node_t *)malloc(sizeof (node_t));
+node_t *node_create(task_t *task, node_t *prevNode, node_t *nextNode){
+    node_t *newNode = malloc(sizeof (node_t));
     newNode->nodeTask = task;
     newNode->prevNode = prevNode;
     newNode->nextNode = nextNode;

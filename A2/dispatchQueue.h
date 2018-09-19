@@ -36,6 +36,7 @@
         struct node_t *nextNode;
     };
     
+    typedef struct node_t node_t;
     typedef struct dispatch_queue_t dispatch_queue_t; // the dispatch queue type
     typedef struct dispatch_queue_thread_t dispatch_queue_thread_t; // the dispatch queue thread type
 
