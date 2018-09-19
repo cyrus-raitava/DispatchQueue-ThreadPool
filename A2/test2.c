@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
     concurrent_dispatch_queue = dispatch_queue_create(CONCURRENT);
     task = task_create(test2, NULL, "test2");
     dispatch_async(concurrent_dispatch_queue, task);
+    sleep(5);
     printf("Safely dispatched\n");
     dispatch_queue_destroy(concurrent_dispatch_queue);
     return EXIT_SUCCESS;

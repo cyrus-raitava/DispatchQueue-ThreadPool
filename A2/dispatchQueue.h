@@ -31,7 +31,7 @@
 
     typedef struct node node_t;
     
-    // Struct to be used for doubly-linked list of tasks
+    // Struct to be used for singly-linked list of tasks
     struct node {
         task_t *nodeTask;
         node_t *nextNode;

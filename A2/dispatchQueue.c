@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define DEBUG 0                                                   
+#define DEBUG 1                                                   
                                                                    
 #if defined(DEBUG) && DEBUG > 0                                      
 #define DEBUG_PRINTLN(fmt, args...)\
@@ -84,8 +84,9 @@ node_t* push(dispatch_queue_t *dispatchQueue, task_t *newTask)
 // (NOTE) it's important to remember to change the head pointer, when using this
 node_t *pop(dispatch_queue_t *dispatchQueue)
 {
-    node_t *result = (node_t*)malloc(sizeof(node_t));
-    result = dispatchQueue->head;
+    printf("got here");
+    node_t *result = dispatchQueue->head;
+    printf("got here");
 
     dispatchQueue->head = dispatchQueue->head->nextNode;
 
@@ -98,7 +99,9 @@ node_t *pop(dispatch_queue_t *dispatchQueue)
 void *wrapper_function(void * input)
 {
 
-    dispatch_queue_t *dispatchQueue = input;
+    dispatch_queue_t *dispatchQueue = (dispatch_queue_t *)input;
+
+    printf(dispatchQueue->head->nodeTask->name);
 
     while(1) 
     {
@@ -108,13 +111,13 @@ void *wrapper_function(void * input)
         DEBUG_PRINTLN("DOING TASK\n");
 
         // Pop the task off of the head
-        node_t *taskedNode = (node_t *)malloc(sizeof(node_t));
+        node_t *taskedNode = pop(dispatchQueue);
 
-        // Pop off the head of the queue, to execute
-        taskedNode = pop(dispatchQueue);
-
+        printf("here woo");
         // Save the task to do
-        task_t *task = (task_t *)malloc(sizeof(task_t));
+        task_t *task = taskedNode->nodeTask;
+
+        printf("executing task with name %s\n", task->name);
         
         task->work(task->params);
 
@@ -225,6 +228,8 @@ int dispatch_async(dispatch_queue_t *queue, task_t *task)
     node_t *pushedNode = (node_t *)malloc(sizeof(node_t));
     
     pushedNode = push(queue, task);
+
+    sem_post(queue->queue_semaphore);
 
     DEBUG_PRINTLN("ASYNC PUSHED A NODE\n");
 
