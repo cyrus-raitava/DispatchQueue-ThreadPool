@@ -272,12 +272,12 @@ int dispatch_async(dispatch_queue_t *queue, task_t *task)
     sem_post(queue->queue_semaphore);
 
     DEBUG_PRINTLN("ASYNC PUSHED A NODE\n");
-
 }
 
 // Method to wait until task has been completed, to return
 int dispatch_sync(dispatch_queue_t *queue, task_t *task)
 {
+    // Push task onto queue
     push(queue, task);
     sem_post(queue->queue_semaphore);
     sem_wait(task->taskSemaphore);    
@@ -287,24 +287,25 @@ int dispatch_sync(dispatch_queue_t *queue, task_t *task)
 void dispatch_for(dispatch_queue_t *queue, long num, void (*work)(long))
 {
     for (long i = 0; i < num; i++) {
-
+        long number = i;
         // Create task, which wraps the function/parameters
         task_t *task = malloc(sizeof(task_t));
-        task = task_create((void *)work, (void *)i, "task");
-        printf("ADDED TASK %ld\n", i);
+        task = task_create((void(*)(void *))work, (void *)number, "task");
+        
         // Push the task onto the queue
-        push(queue, task);
+        dispatch_async(queue, task);
     }
 
     // Wait until the queue is empty, to return and exit
     dispatch_queue_wait(queue);
+    dispatch_queue_destroy(queue);
 }
 
 int dispatch_queue_wait(dispatch_queue_t *queue){
 	// Only return when number of threads executing is NONE, and the head of the queue is NULL (queue is empty)
 	while (1) {
-		printf("LOOKING AT NUMEXECUTINGTHREADS: %d\t", queue->numExecutingThreads);
-		printf("QUEUE HEAD IS: %s\n", queue->head->nodeTask->name);
+		//printf("LOOKING AT NUMEXECUTINGTHREADS: %d\t", queue->numExecutingThreads);
+		//printf("QUEUE HEAD IS: %s\n", queue->head->nodeTask->name);
         if ((!queue->head) && (queue->numExecutingThreads == 0)) {
 			return 0;
 		}
