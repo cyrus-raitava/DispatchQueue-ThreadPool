@@ -135,10 +135,11 @@ void *wrapper_function(void* input)
 
     dispatch_queue_t *dispatchQueue = (dispatch_queue_t *)input;
 
-    while(1) 
-    {
+    while(1) {
+
         // Wait until there is something on the queue to do
         sem_wait(dispatchQueue->queue_semaphore);
+	dispatchQueue->numExecutingThreads++;
 
         DEBUG_PRINTLN("DOING TASK\n");
 
@@ -152,12 +153,7 @@ void *wrapper_function(void* input)
         taskedNode->nodeTask->work(taskedNode->nodeTask->params);
 
         DEBUG_PRINTLN("EXECUTED TASK W/ NAME: ");
-        //printf("%s\n", task->name);
-        DEBUG_PRINTLN("END OF WHILE ITERATION\n");
-        //task->work(task->params);
-
-        //task_destroy(task);
-        //node_destroy(taskedNode);
+        dispatchQueue->numExecutingThreads--;
     }
 }
 
@@ -175,6 +171,9 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
     newDispatchQueue->queue_type = queueType;
     DEBUG_PRINTLN("assigning head value\n");
     newDispatchQueue->head = NULL;
+
+    // Set number of executing threads to (initially) be zero
+    newDispatchQueue->numExecutingThreads = 0;
     
     // HAVE CHANGED, AS HEAD NODE IS FIRST CREATED BY PUSH
     // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
@@ -276,5 +275,12 @@ void dispatch_for(dispatch_queue_t *queue, long num, void (*work)(long)){
 }
 
 int dispatch_queue_wait(dispatch_queue_t *queue){
-return 0;
+	// Only return when number of threads executing is NONE, and the head of the queue is NULL (queue is empty)
+	while (1) {
+		//printf("LOOKING AT NUMEXECUTINGTHREADS: %d\n", queue->numExecutingThreads);
+		if ((!queue->head) && (queue->numExecutingThreads == 0)) {
+			return 0;
+		}
+	}
+
 }

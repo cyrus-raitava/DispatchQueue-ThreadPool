@@ -59,6 +59,8 @@
 
         // Semaphore to let threads know when queue has a task on it
         sem_t *queue_semaphore;
+
+	volatile int numExecutingThreads;
     };
    
     task_t *task_create(void (*)(void *), void *, char*);
