@@ -17,7 +17,7 @@
 task_t *task_create(void (*work)(void *), void *params, char *name) 
 {
     // Create new reference to task to be made
-    task_t *newTask = (task_t *)malloc(sizeof (task_t));
+    task_t *newTask = malloc(sizeof (task_t));
     // Fill in the rest of the arguments for the new task
     newTask->params = params;
     newTask->work = work;
@@ -134,6 +134,7 @@ void *wrapper_function(void* input)
     dispatch_queue_t *dispatchQueue = (dispatch_queue_t *)input;
 
     //printf(dispatchQueue->head->nodeTask->name);
+	printf("address of dispatch queue in thread: %p\n", dispatchQueue);
 
     while(1) 
     {
@@ -151,9 +152,9 @@ void *wrapper_function(void* input)
 
         taskedNode->nodeTask->work(taskedNode->nodeTask->params);
 
-        DEBUG_PRINTLN("EXECUTING TASK W/ NAME: ");
+        DEBUG_PRINTLN("EXECUTED TASK W/ NAME: ");
         printf("%s\n", task->name);
-        
+        DEBUG_PRINTLN("END OF WHILE ITERATION\n");
         //task->work(task->params);
 
         //task_destroy(task);
@@ -167,31 +168,34 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
     DEBUG_PRINTLN("GOT SOMEWHERE\n");
 
     // Create new pointer to new dispatch queue, and allocate associated memory
-    dispatch_queue_t *newDispatchQueue = (dispatch_queue_t *)malloc(sizeof(dispatch_queue_t));
+    dispatch_queue_t *newDispatchQueue = malloc(sizeof(dispatch_queue_t));
+
+	printf("address of dispatch queue: %p\n", newDispatchQueue);
 
     // Set the queue type field
-    //newDispatchQueue->queue_type = (queue_type_t *)malloc(sizeof(queue_type_t));
+    //newDispatchQueue->queue_type = malloc(sizeof(queue_type_t));
     DEBUG_PRINTLN("assigning queue type\n");
     newDispatchQueue->queue_type = queueType;
     DEBUG_PRINTLN("assigning head value\n");
+    newDispatchQueue->head = NULL;
     
     // HAVE CHANGED, AS HEAD NODE IS FIRST CREATED BY PUSH
     // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
-    //newDispatchQueue->head = (node_t *)malloc(sizeof(node_t));
+    //newDispatchQueue->head = malloc(sizeof(node_t));
 
     int numberOfThreads = 0;
 
-    if (queueType = CONCURRENT) 
+    if (queueType == CONCURRENT) 
     {
         // Get the number of cores of the machine
         numberOfThreads = getNumberOfProcessors();
 
         // Allocate space for the thread queue contained within the dispatch queue
         DEBUG_PRINTLN("assigning thread queue\n");
-        newDispatchQueue->thread_queue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads);
-    } else if (queueType = SERIAL)
+        newDispatchQueue->thread_queue = malloc(sizeof(dispatch_queue_thread_t)*numberOfThreads);
+    } else if (queueType == SERIAL)
     {
-        newDispatchQueue->thread_queue = (dispatch_queue_thread_t *)malloc(sizeof(dispatch_queue_thread_t));
+        newDispatchQueue->thread_queue = malloc(sizeof(dispatch_queue_thread_t));
         numberOfThreads = 1;
     }
 
@@ -221,26 +225,18 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
 // Free tasks in linked list, given the location of the head of the queue
 void free_nodes_from_list(node_t *head)
 {
-    node_t* next = head;
-    
-    node_t* toFree;
+    node_t *current = head;
 
-    while (next->nextNode)
-    {
-        toFree = next;
-        next = next->nextNode;
-        node_destroy(toFree);
+    while (current->nextNode) {
+	
     }
-
-    node_destroy(next);
 
     printf("FREED NODES FROM LIST\n");
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
 {
-    // NOTE THAT TASKS SHOULD PRESUMABLY BE FREE AT THIS POINT. MAKE A CHECK THAT THEY ARE
-    DEBUG_PRINTLN("FREEING DISPATCH QUEUE");
+    printf("get into dispatch queue destroy method\n");
 
     if (!dispatchQueue->head)
     {
@@ -248,13 +244,10 @@ void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
     }
     
     // Free the thread queue field
- //   free(dispatchQueue->thread_queue);
-
-    // Free the queue type field
- //   free(dispatchQueue->queue_type);
+    free(dispatchQueue->thread_queue);
 
     // Free the queue semaphore
- //   free(dispatchQueue->queue_semaphore);
+    free(dispatchQueue->queue_semaphore);
 
     free(dispatchQueue);
 
@@ -264,7 +257,7 @@ void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
 int dispatch_async(dispatch_queue_t *queue, task_t *task)
 {
     // Push node onto end of queue
-    node_t *pushedNode = (node_t *)malloc(sizeof(node_t));
+    node_t *pushedNode = malloc(sizeof(node_t));
     DEBUG_PRINTLN("pushing a node to the queue\n");
     push(queue, task);
 
