@@ -1,10 +1,12 @@
 #include "dispatchQueue.h"
-#include "num_cores.c"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/sysinfo.h>
+#include <unistd.h>
 
-#define DEBUG 1                                                   
+
+#define DEBUG 0                                                  
                                                                    
 #if defined(DEBUG) && DEBUG > 0                                      
 #define DEBUG_PRINTLN(fmt, args...)\
@@ -133,9 +135,6 @@ void *wrapper_function(void* input)
 
     dispatch_queue_t *dispatchQueue = (dispatch_queue_t *)input;
 
-    //printf(dispatchQueue->head->nodeTask->name);
-	printf("address of dispatch queue in thread: %p\n", dispatchQueue);
-
     while(1) 
     {
         // Wait until there is something on the queue to do
@@ -153,7 +152,7 @@ void *wrapper_function(void* input)
         taskedNode->nodeTask->work(taskedNode->nodeTask->params);
 
         DEBUG_PRINTLN("EXECUTED TASK W/ NAME: ");
-        printf("%s\n", task->name);
+        //printf("%s\n", task->name);
         DEBUG_PRINTLN("END OF WHILE ITERATION\n");
         //task->work(task->params);
 
@@ -169,8 +168,6 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
 
     // Create new pointer to new dispatch queue, and allocate associated memory
     dispatch_queue_t *newDispatchQueue = malloc(sizeof(dispatch_queue_t));
-
-	printf("address of dispatch queue: %p\n", newDispatchQueue);
 
     // Set the queue type field
     //newDispatchQueue->queue_type = malloc(sizeof(queue_type_t));
@@ -188,7 +185,7 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
     if (queueType == CONCURRENT) 
     {
         // Get the number of cores of the machine
-        numberOfThreads = getNumberOfProcessors();
+        numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN);
 
         // Allocate space for the thread queue contained within the dispatch queue
         DEBUG_PRINTLN("assigning thread queue\n");
@@ -228,17 +225,20 @@ void free_nodes_from_list(node_t *head)
     node_t *current = head;
 
     while (current->nextNode) {
+	node_t *next = current->nextNode;
 	
+	node_destroy(current);
+	current = next;
     }
 
-    printf("FREED NODES FROM LIST\n");
+    DEBUG_PRINTLN("FREED NODES FROM LIST\n");
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
 {
-    printf("get into dispatch queue destroy method\n");
+    DEBUG_PRINTLN("GOT INTO DISPATCH QUEUE DESTROY\n");
 
-    if (!dispatchQueue->head)
+    if (dispatchQueue->head)
     {
         free_nodes_from_list(dispatchQueue->head);
     }
@@ -268,8 +268,13 @@ int dispatch_async(dispatch_queue_t *queue, task_t *task)
 
 }
 
-int dispatch_sync(dispatch_queue_t *, task_t *);
+int dispatch_sync(dispatch_queue_t *queue, task_t *task){
+return 0;
+}
 
-void dispatch_for(dispatch_queue_t *, long, void (*)(long));
+void dispatch_for(dispatch_queue_t *queue, long num, void (*work)(long)){
+}
 
-int dispatch_queue_wait(dispatch_queue_t *);
+int dispatch_queue_wait(dispatch_queue_t *queue){
+return 0;
+}
