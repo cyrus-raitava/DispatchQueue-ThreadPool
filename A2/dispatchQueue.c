@@ -284,14 +284,28 @@ int dispatch_sync(dispatch_queue_t *queue, task_t *task)
     return 0;
 }
 
-void dispatch_for(dispatch_queue_t *queue, long num, void (*work)(long)){
+void dispatch_for(dispatch_queue_t *queue, long num, void (*work)(long))
+{
+    for (long i = 0; i < num; i++) {
+
+        // Create task, which wraps the function/parameters
+        task_t *task = malloc(sizeof(task_t));
+        task = task_create((void *)work, (void *)i, "task");
+        printf("ADDED TASK %ld\n", i);
+        // Push the task onto the queue
+        push(queue, task);
+    }
+
+    // Wait until the queue is empty, to return and exit
+    dispatch_queue_wait(queue);
 }
 
 int dispatch_queue_wait(dispatch_queue_t *queue){
 	// Only return when number of threads executing is NONE, and the head of the queue is NULL (queue is empty)
 	while (1) {
-		//printf("LOOKING AT NUMEXECUTINGTHREADS: %d\n", queue->numExecutingThreads);
-		if ((!queue->head) && (queue->numExecutingThreads == 0)) {
+		printf("LOOKING AT NUMEXECUTINGTHREADS: %d\t", queue->numExecutingThreads);
+		printf("QUEUE HEAD IS: %s\n", queue->head->nodeTask->name);
+        if ((!queue->head) && (queue->numExecutingThreads == 0)) {
 			return 0;
 		}
 	}
