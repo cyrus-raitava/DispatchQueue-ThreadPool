@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "type_traits": "c",
-        "dispatchqueue.h": "c"
+        "dispatchqueue.h": "c",
+        "stdlib.h": "c"
     }
 }

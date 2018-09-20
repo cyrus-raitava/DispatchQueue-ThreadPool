@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
     dispatch_async(concurrent_dispatch_queue, task);
     sleep(5);
     printf("Safely dispatched\n");
+    //printf("NAME IS: %s", concurrent_dispatch_queue->head->nodeTask->name);
     dispatch_queue_destroy(concurrent_dispatch_queue);
     return EXIT_SUCCESS;
 }

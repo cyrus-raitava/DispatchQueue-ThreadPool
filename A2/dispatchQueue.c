@@ -55,13 +55,15 @@ node_t *node_create(task_t *task, node_t *nextNode)
 // Method to destroy a node
 void node_destroy(node_t *node)
 {
-    task_destroy(node->nodeTask);
+    if (node->nodeTask) {
+        task_destroy(node->nodeTask);
+    }
 
     if (node->nextNode){
         free(node->nextNode);
     }
-    //free(node->prevNode);
-    //free(node->nextNode);
+
+    free(node);
 
     DEBUG_PRINTLN("DESTROYED NODE\n");
 }
@@ -106,17 +108,22 @@ node_t* pop(dispatch_queue_t *dispatchQueue)
         return NULL;
     }
 
+    DEBUG_PRINTLN("GOT PAST NULL CHECK\n");
+
     node_t *result = dispatchQueue->head;
+    
+    DEBUG_PRINTLN("RESULT ALLOCATION\n");
     
     // If there is a second node, set that to be the new head
     if (dispatchQueue->head->nextNode) {
         dispatchQueue->head = dispatchQueue->head->nextNode;
+        DEBUG_PRINTLN("SET SECOND NODE TO BE HEAD\n");
         return result;
     } else {
-
+        DEBUG_PRINTLN("SET HEAD TO BE NULL\n");
         // If not, set the new head of the dispatchQueue to be null
         dispatchQueue->head = NULL;
-        return NULL;
+        return result;
     }
 }
 
@@ -142,12 +149,15 @@ void *wrapper_function(void* input)
         // Save the task to do
         task_t *task = taskedNode->nodeTask;
 
-        printf("executing task with name %s\n", task->name);
-        
-        task->work(task->params);
+        taskedNode->nodeTask->work(taskedNode->nodeTask->params);
 
-        free(task);
-        free(taskedNode);
+        DEBUG_PRINTLN("EXECUTING TASK W/ NAME: ");
+        printf("%s\n", task->name);
+        
+        //task->work(task->params);
+
+        //task_destroy(task);
+        //node_destroy(taskedNode);
     }
 }
 
@@ -211,9 +221,8 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
 // Free tasks in linked list, given the location of the head of the queue
 void free_nodes_from_list(node_t *head)
 {
-    //node_t *next = (node_t *)malloc(sizeof (node_t));
     node_t* next = head;
-    //node_t *toFree = (node_t *)malloc(sizeof (node_t));
+    
     node_t* toFree;
 
     while (next->nextNode)
@@ -231,6 +240,7 @@ void free_nodes_from_list(node_t *head)
 void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
 {
     // NOTE THAT TASKS SHOULD PRESUMABLY BE FREE AT THIS POINT. MAKE A CHECK THAT THEY ARE
+    DEBUG_PRINTLN("FREEING DISPATCH QUEUE");
 
     if (!dispatchQueue->head)
     {
@@ -255,13 +265,13 @@ int dispatch_async(dispatch_queue_t *queue, task_t *task)
 {
     // Push node onto end of queue
     node_t *pushedNode = (node_t *)malloc(sizeof(node_t));
+    DEBUG_PRINTLN("pushing a node to the queue\n");
     push(queue, task);
 
+    DEBUG_PRINTLN("posting to the semaphore\n");
     sem_post(queue->queue_semaphore);
 
     DEBUG_PRINTLN("ASYNC PUSHED A NODE\n");
-
-    // Make second element head of dispatch_queue
 
 }
 
