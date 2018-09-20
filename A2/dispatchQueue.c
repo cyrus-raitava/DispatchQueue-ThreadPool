@@ -26,6 +26,11 @@ task_t *task_create(void (*work)(void *), void *params, char *name)
     // Fill in new task parameters from method declaration
     strcpy(newTask->name, name);
 
+    // Initialise and set the semaphore of the task
+    sem_t *semaphore = malloc(sizeof(sem_t));
+    sem_init(semaphore, 0, 0);
+    newTask->taskSemaphore = semaphore;
+
     DEBUG_PRINTLN("CREATED TASK\n");
 
     // Return created task
@@ -139,7 +144,8 @@ void *wrapper_function(void* input)
 
         // Wait until there is something on the queue to do
         sem_wait(dispatchQueue->queue_semaphore);
-	dispatchQueue->numExecutingThreads++;
+        
+	    dispatchQueue->numExecutingThreads++;
 
         DEBUG_PRINTLN("DOING TASK\n");
 
@@ -151,6 +157,8 @@ void *wrapper_function(void* input)
         task_t *task = taskedNode->nodeTask;
 
         taskedNode->nodeTask->work(taskedNode->nodeTask->params);
+        
+        sem_post(task->taskSemaphore);
 
         DEBUG_PRINTLN("EXECUTED TASK W/ NAME: ");
         dispatchQueue->numExecutingThreads--;
@@ -267,8 +275,13 @@ int dispatch_async(dispatch_queue_t *queue, task_t *task)
 
 }
 
-int dispatch_sync(dispatch_queue_t *queue, task_t *task){
-return 0;
+// Method to wait until task has been completed, to return
+int dispatch_sync(dispatch_queue_t *queue, task_t *task)
+{
+    push(queue, task);
+    sem_post(queue->queue_semaphore);
+    sem_wait(task->taskSemaphore);    
+    return 0;
 }
 
 void dispatch_for(dispatch_queue_t *queue, long num, void (*work)(long)){

@@ -27,6 +27,8 @@
         void (*work)(void *);       // the function to perform
         void *params;               // parameters to pass to the function
         task_dispatch_type_t type;  // asynchronous or synchronous
+
+        sem_t *taskSemaphore;       // semaphore to signal whether task is being used
     } task_t;
 
     typedef struct node node_t;
