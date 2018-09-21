@@ -2,6 +2,7 @@
     "files.associations": {
         "type_traits": "c",
         "dispatchqueue.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "unistd.h": "c"
     }
 }

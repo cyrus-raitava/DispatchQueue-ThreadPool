@@ -7,7 +7,8 @@
 
 
 #define DEBUG 0                                                  
-                                                                   
+
+// Method to be used to print debug lines                                                
 #if defined(DEBUG) && DEBUG > 0                                      
 #define DEBUG_PRINTLN(fmt, args...)\
 	printf("DEBUG: " fmt, ##args)                                   
@@ -20,9 +21,11 @@ task_t *task_create(void (*work)(void *), void *params, char *name)
 {
     // Create new reference to task to be made
     task_t *newTask = malloc(sizeof (task_t));
-    // Fill in the rest of the arguments for the new task
+
+    // Fill in the rest of the arguments for the new task, dependent on input parameters
     newTask->params = params;
     newTask->work = work;
+
     // Fill in new task parameters from method declaration
     strcpy(newTask->name, name);
 
@@ -83,11 +86,15 @@ void push(dispatch_queue_t *dispatchQueue, task_t *newTask)
     // Check if head exists, and if it doesn't, set
     // the new task, wrapped in a node, to be the head
 
+    pthread_mutex_lock(dispatchQueue->lock);
+
     DEBUG_PRINTLN("PUSHING NODE W/ TASK NAME: %s\n", newTask->name);
 
     if (!dispatchQueue->head) {
         dispatchQueue->head = node_create(newTask, NULL);
         DEBUG_PRINTLN("HEAD DIDN'T EXIST, SO HEAD IS NOW TASK W/ NAME: %s\n", dispatchQueue->head->nodeTask->name);
+        
+        pthread_mutex_unlock(dispatchQueue->lock);
         return;
     }
 
@@ -101,6 +108,7 @@ void push(dispatch_queue_t *dispatchQueue, task_t *newTask)
 
     // Append task wrapped in node, onto tail of singly-linked list
     position->nextNode = node_create(newTask, NULL);
+    pthread_mutex_unlock(dispatchQueue->lock);
     return;
 }
 
@@ -108,10 +116,13 @@ void push(dispatch_queue_t *dispatchQueue, task_t *newTask)
 // (NOTE) it's important to remember to change the head pointer, when using this
 node_t* pop(dispatch_queue_t *dispatchQueue)
 {
+    pthread_mutex_lock(dispatchQueue->lock);
+
     DEBUG_PRINTLN("GOT IN POP\n");
     
     if (!dispatchQueue->head) {
         DEBUG_PRINTLN("POP: HEAD WAS NULL, BAD BAD NOT GOOD\n");
+        pthread_mutex_unlock(dispatchQueue->lock);
         return NULL;
     }
 
@@ -125,11 +136,15 @@ node_t* pop(dispatch_queue_t *dispatchQueue)
     if (dispatchQueue->head->nextNode) {
         dispatchQueue->head = dispatchQueue->head->nextNode;
         DEBUG_PRINTLN("SET SECOND NODE TO BE HEAD\n");
+        
+        pthread_mutex_unlock(dispatchQueue->lock);
         return result;
     } else {
         DEBUG_PRINTLN("SET HEAD TO BE NULL\n");
         // If not, set the new head of the dispatchQueue to be null
         dispatchQueue->head = NULL;
+        
+        pthread_mutex_unlock(dispatchQueue->lock);
         return result;
     }
 }
@@ -182,6 +197,15 @@ dispatch_queue_t *dispatch_queue_create(queue_type_t queueType)
 
     // Set number of executing threads to (initially) be zero
     newDispatchQueue->numExecutingThreads = 0;
+
+    // Allocate memory for lock
+    newDispatchQueue->lock = malloc(sizeof(pthread_mutex_t));
+
+    // Create dispatch queue lock CHECK IF RETURN ZERO OR FAIL
+    pthread_mutex_init(newDispatchQueue->lock, NULL);
+
+    
+    
     
     // HAVE CHANGED, AS HEAD NODE IS FIRST CREATED BY PUSH
     // Allocate memory for the first task, that'll be set to point to the head of the list of tasks
@@ -255,6 +279,8 @@ void dispatch_queue_destroy(dispatch_queue_t *dispatchQueue)
 
     // Free the queue semaphore
     free(dispatchQueue->queue_semaphore);
+
+    free(dispatchQueue->lock);
 
     free(dispatchQueue);
 
