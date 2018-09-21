@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-        printf("This machine has %d cores.\n", getNumberOfProcessors());
+    printf("This machine has %d cores.\n", getNumberOfProcessors());
     return 0;
 }
 
@@ -17,4 +17,3 @@ int getNumberOfProcessors()
 {
     return sysconf(_SC_NPROCESSORS_ONLN);
 }
-
